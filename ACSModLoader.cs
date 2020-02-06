@@ -10,10 +10,13 @@ namespace ModLoader
 	{
 		private static string RootPath;
         private static readonly string MOD_DIR_NAME = "DLL_Mods";
-		public static void Main(string[] args)
+		private static StreamWriter Log;
+		public static void Main()
 		{
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
-			RootPath = Path.GetDirectoryName(args[0]);
+			RootPath = Directory.GetCurrentDirectory();
+			Log = new StreamWriter("ModLoader.log");
+            Log.WriteLine($"it worked! RootPath: {RootPath}");
 			var modPath = Path.Combine(RootPath, MOD_DIR_NAME);
 			if (!Directory.Exists(modPath))
 			{
@@ -28,27 +31,37 @@ namespace ModLoader
 			try
 			{
 				ModLoader.ApplyHarmonyPatches(ModLoader.PreloadModAssemblies(list));
-				//KLog.Log(0, "All mods successfully loaded!", new object[0]);
+                Log.WriteLine("All mods successfully loaded!");
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				//KLog.Log(3, ex.Message, new object[0]);
+                Log.WriteLine(ex.Message);
+			}
+			finally
+			{
+				Log.Close();
 			}
 		}
 
 		private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs args)
 		{
-			var file = Path.Combine(RootPath, args.Name);
-			if(File.Exists(file))
+			var rootFile = Path.Combine(RootPath, args.Name);
+			var managedPath = Path.Combine(RootPath, "Amazing Cultivation Simulator_Data/Managed");
+			var managedFile = Path.Combine(managedPath, args.Name);
+			if(File.Exists(rootFile))
 			{
-				return Assembly.LoadFile(file);
+				return Assembly.LoadFile(rootFile);
+			}
+			else if(File.Exists(managedFile))
+			{
+				return Assembly.LoadFile(managedFile);
 			}
 			else return null;
 		}
 
 		private static List<Assembly> ApplyHarmonyPatches(List<Assembly> modAssemblies)
 		{
-			//KLog.Log(0, "Applying Harmony patches", new object[0]);
+            Log.WriteLine("Applying Harmony patches");
 			var list = new List<string>();
 			var list2 = new List<Assembly>();
 			foreach (var assembly in modAssemblies)
@@ -57,7 +70,7 @@ namespace ModLoader
 				{
 					try
 					{
-						//KLog.Log(0, "Loading: " + assembly.FullName, new object[0]);
+                        Log.WriteLine("Loading: " + assembly.FullName);
 						var assembly2 = Assembly.LoadFrom(assembly.Location);
 						var harmonyInstance = HarmonyInstance.Create(assembly2.FullName);
 						if (harmonyInstance != null)
@@ -66,26 +79,26 @@ namespace ModLoader
 						}
 						list2.Add(assembly2);
 					}
-					catch (Exception)
+					catch (Exception ex)
 					{
 						list.Add(assembly.GetName().ToString());
-						//KLog.Log(3, "Patching mod " + assembly.GetName() + " failed!", new object[0]);
-						//KLog.Log(3, ex.Message, new object[0]);
+                        Log.WriteLine("Patching mod " + assembly.GetName() + " failed!");
+                        Log.WriteLine(ex.Message);
 					}
 				}
 			}
 			if (list.Count > 0)
 			{
-				string text = "\nThe following mods could not be patched:\n" + string.Join("\n\t", list.ToArray());
-				//KLog.Log(3, text, new object[0]);
+				var text = "\nThe following mods could not be patched:\n" + string.Join("\n\t", list.ToArray());
+                Log.WriteLine(text);
 			}
 			return list2;
 		}
 
 		private static List<Assembly> PreloadModAssemblies(List<FileInfo> assemblyFiles)
 		{
-			//KLog.Log(0, "Loading mod assemblies", new object[0]);
-			var list = new List<Assembly>();
+            Log.WriteLine("Loading mod assemblies");
+            var list = new List<Assembly>();
 			var list2 = new List<string>();
 			if (assemblyFiles != null)
 			{
@@ -98,24 +111,24 @@ namespace ModLoader
 							var assembly = Assembly.ReflectionOnlyLoadFrom(fileInfo.FullName);
 							if (list.Contains(assembly))
 							{
-								//KLog.Log(0, "Skipping duplicate mod " + assembly.FullName, new object[0]);
+                                Log.WriteLine("Skipping duplicate mod " + assembly.FullName);
 							}
 							else
 							{
-								//KLog.Log(0, "Preloading " + assembly.FullName, new object[0]);
-								list.Add(assembly);
+                                Log.WriteLine("Preloading " + assembly.FullName);
+                                list.Add(assembly);
 							}
 						}
-						catch (Exception)
+						catch (Exception ex)
 						{
 							list2.Add(fileInfo.Name);
-							//KLog.Log(3, "Preloading mod " + fileInfo.Name + " failed!", new object[0]);
-							//KLog.Log(3, ex.Message, new object[0]);
+                            Log.WriteLine("Preloading mod " + fileInfo.Name + " failed!");
+                            Log.WriteLine(ex.Message);
 						}
 						if (list2.Count > 0)
 						{
 							var text = "\nThe following mods could not be pre-loaded:\n" + string.Join("\n\t", list2.ToArray());
-							//KLog.Log(3, text, new object[0]);
+                            Log.WriteLine(text);
 						}
 					}
 				}
