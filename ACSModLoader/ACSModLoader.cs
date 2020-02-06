@@ -13,9 +13,9 @@ namespace ModLoader
 		private static StreamWriter Log;
 		public static void Main()
 		{
+            Log = new StreamWriter("ModLoader.log");
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
 			RootPath = Directory.GetCurrentDirectory();
-			Log = new StreamWriter("ModLoader.log");
             Log.WriteLine($"it worked! RootPath: {RootPath}");
 			var modPath = Path.Combine(RootPath, MOD_DIR_NAME);
 			if (!Directory.Exists(modPath))
@@ -43,9 +43,13 @@ namespace ModLoader
 			}
 		}
 
+		// this handler add the game root path to the resolving path.
 		private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs args)
 		{
-			var rootFile = Path.Combine(RootPath, args.Name);
+            var t = args.Name.Split(',');
+			var fileName = t[0].Trim() + ".dll";
+			Log.WriteLine($"current resolving assembly is: {fileName}");
+			var rootFile = Path.Combine(RootPath, fileName);
 			if(File.Exists(rootFile))
 			{
 				return Assembly.LoadFile(rootFile);
