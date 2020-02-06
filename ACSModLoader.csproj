@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
-    <TargetFrameworks>net35</TargetFrameworks>
+    <TargetFrameworks>net35;net40</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="1.2.0.1" />

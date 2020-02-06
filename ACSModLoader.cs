@@ -9,7 +9,7 @@ namespace ModLoader
 	public static class ModLoader
 	{
 		private static string RootPath;
-        private static readonly string MOD_DIR_NAME = "DLL_Mods";
+        private static readonly string MOD_DIR_NAME = "Mods";
 		private static StreamWriter Log;
 		public static void Main()
 		{
@@ -46,15 +46,9 @@ namespace ModLoader
 		private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs args)
 		{
 			var rootFile = Path.Combine(RootPath, args.Name);
-			var managedPath = Path.Combine(RootPath, "Amazing Cultivation Simulator_Data/Managed");
-			var managedFile = Path.Combine(managedPath, args.Name);
 			if(File.Exists(rootFile))
 			{
 				return Assembly.LoadFile(rootFile);
-			}
-			else if(File.Exists(managedFile))
-			{
-				return Assembly.LoadFile(managedFile);
 			}
 			else return null;
 		}
