@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using Harmony;
 
 namespace ModLoader
@@ -13,6 +14,14 @@ namespace ModLoader
 		private static StreamWriter Log;
 		public static void Main()
 		{
+			new Thread(() =>
+			{
+				Thread.Sleep(5000);
+				Run();
+			}).Start();
+		}
+		public static void Run()
+		{
             Log = new StreamWriter("ModLoader.log");
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
 			RootPath = Directory.GetCurrentDirectory();
@@ -23,14 +32,9 @@ namespace ModLoader
 				Directory.CreateDirectory(modPath);
 			}
 			var files = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
-			var list = new List<FileInfo>();
-			foreach (var fileName in files)
-			{
-				list.Add(new FileInfo(fileName));
-			}
 			try
 			{
-				ModLoader.ApplyHarmonyPatches(ModLoader.PreloadModAssemblies(list));
+				ModLoader.ApplyHarmonyPatches(ModLoader.PreloadModAssemblies(files));
                 Log.WriteLine("All mods successfully loaded!");
 			}
 			catch (Exception ex)
@@ -57,11 +61,53 @@ namespace ModLoader
 			else return null;
 		}
 
+        private static List<Assembly> PreloadModAssemblies(string[] files)
+        {
+            Log.WriteLine("Pre-Loading mod assemblies");
+            var result = new List<Assembly>();
+            var failed = new List<string>();
+			for(int i = 0; i < files.Length; i++)
+			{
+				var fileName = files[i];
+				var fileInfo = new FileInfo(fileName);
+				// we exclude errogenous libraries that may be a problem.
+				if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower() == "acsmodloader"))
+				{
+					try
+					{
+						var assembly = Assembly.ReflectionOnlyLoadFrom(fileName);
+						if (result.Contains(assembly))
+						{
+							Log.WriteLine("Skipping duplicate mod " + fileName);
+						}
+						else
+						{
+							Log.WriteLine("Preloading " + fileName);
+							result.Add(assembly);
+						}
+					}
+					catch (Exception ex)
+					{
+						failed.Add(fileInfo.Name);
+						Log.WriteLine("Preloading mod " + fileInfo.Name + " failed!");
+						Log.WriteLine(ex.Message);
+					}
+				}
+			}
+            if (failed.Count > 0)
+            {
+                var text = "\nThe following mods could not be pre-loaded:\n" + string.Join("\n\t", failed.ToArray());
+                Log.WriteLine(text);
+            }
+            Log.WriteLine("Sorting Dependencies");
+			result.Sort(new AssemblyComparer());
+            return result;
+        }
 		private static List<Assembly> ApplyHarmonyPatches(List<Assembly> modAssemblies)
 		{
             Log.WriteLine("Applying Harmony patches");
-			var list = new List<string>();
-			var list2 = new List<Assembly>();
+            var result = new List<Assembly>();
+			var failed = new List<string>();
 			foreach (var assembly in modAssemblies)
 			{
 				if (assembly != null)
@@ -69,69 +115,28 @@ namespace ModLoader
 					try
 					{
                         Log.WriteLine("Loading: " + assembly.FullName);
-						var assembly2 = Assembly.LoadFrom(assembly.Location);
-						var harmonyInstance = HarmonyInstance.Create(assembly2.FullName);
+						var patch = Assembly.LoadFile(assembly.Location);
+						var harmonyInstance = HarmonyInstance.Create(patch.FullName);
 						if (harmonyInstance != null)
 						{
-							harmonyInstance.PatchAll(assembly2);
+							harmonyInstance.PatchAll(patch);
 						}
-						list2.Add(assembly2);
+						result.Add(patch);
 					}
 					catch (Exception ex)
 					{
-						list.Add(assembly.GetName().ToString());
+						failed.Add(assembly.GetName().ToString());
                         Log.WriteLine("Patching mod " + assembly.GetName() + " failed!");
                         Log.WriteLine(ex.Message);
 					}
 				}
 			}
-			if (list.Count > 0)
+			if (failed.Count > 0)
 			{
-				var text = "\nThe following mods could not be patched:\n" + string.Join("\n\t", list.ToArray());
+				var text = "\nThe following mods could not be patched:\n" + string.Join("\n\t", failed.ToArray());
                 Log.WriteLine(text);
 			}
-			return list2;
-		}
-
-		private static List<Assembly> PreloadModAssemblies(List<FileInfo> assemblyFiles)
-		{
-            Log.WriteLine("Loading mod assemblies");
-            var list = new List<Assembly>();
-			var list2 = new List<string>();
-			if (assemblyFiles != null)
-			{
-				foreach (var fileInfo in assemblyFiles)
-				{
-					if (!(((fileInfo != null) ? fileInfo.Extension : null) != ".dll") && !(fileInfo.Name.ToLower() == "0harmony") && !(fileInfo.Name.ToLower() == "modloader"))
-					{
-						try
-						{
-							var assembly = Assembly.ReflectionOnlyLoadFrom(fileInfo.FullName);
-							if (list.Contains(assembly))
-							{
-                                Log.WriteLine("Skipping duplicate mod " + assembly.FullName);
-							}
-							else
-							{
-                                Log.WriteLine("Preloading " + assembly.FullName);
-                                list.Add(assembly);
-							}
-						}
-						catch (Exception ex)
-						{
-							list2.Add(fileInfo.Name);
-                            Log.WriteLine("Preloading mod " + fileInfo.Name + " failed!");
-                            Log.WriteLine(ex.Message);
-						}
-						if (list2.Count > 0)
-						{
-							var text = "\nThe following mods could not be pre-loaded:\n" + string.Join("\n\t", list2.ToArray());
-                            Log.WriteLine(text);
-						}
-					}
-				}
-			}
-			return list;
+			return result;
 		}
 	}
 }

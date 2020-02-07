@@ -1,8 +1,6 @@
-﻿using System.Linq;
-using Harmony;
+﻿using Harmony;
 using XiaWorld;
 using System.IO;
-using System.Text.RegularExpressions;
 using ModLoader;
 
 namespace FastMakeGold
@@ -33,8 +31,7 @@ namespace FastMakeGold
             var curNeck = npc.PropertyMgr.Practice.CurNeck;
             if (curNeck.Kind == g_emGongBottleNeckType.Gold)
             {
-                var max_dan = GameDefine.GoldDanLevel.Keys.Max();
-                if (__instance.gold > max_dan) // we only speed up after we reached level 1 dan for better accuracy.
+                if (__instance.gold > GameDefine.GoldDanValue[0]) // we only speed up after we reached level 1 dan for better accuracy.
                 {
                     var practice = npc.PropertyMgr.Practice;
                     var consumption = practice.BaseAbsorbEffectGold() * multiplier;
