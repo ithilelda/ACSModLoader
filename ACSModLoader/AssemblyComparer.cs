@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Reflection;
-using System;
 
 namespace ModLoader
 {
@@ -8,26 +7,24 @@ namespace ModLoader
     {
         public int Compare(Assembly a, Assembly b)
         {
-            var a_deps = Attribute.GetCustomAttributes(a, typeof(RequireAttribute));
-            var b_deps = Attribute.GetCustomAttributes(b, typeof(RequireAttribute));
+            var a_deps = a.GetReferencedAssemblies();
+            var b_deps = b.GetReferencedAssemblies();
             if(a_deps.Length > 0)
             {
                 for(int i = 0; i < a_deps.Length; i++)
                 {
-                    var dep = a_deps[i] as RequireAttribute;
-                    bool version_match = string.IsNullOrEmpty(dep.Version) ? true : dep.Version == b.GetName().Version.ToString();
+                    var dep = a_deps[i];
                     // if a depends on b, then a is "greater" than b.
-                    if(dep.Dependency == b.GetName().Name && version_match) return 1;
+                    if(b.GetName().Name == dep.Name) return 1;
                 }
             }
             if(b_deps.Length > 0)
             {
                 for (int i = 0; i < b_deps.Length; i++)
                 {
-                    var dep = b_deps[i] as RequireAttribute;
-                    bool version_match = string.IsNullOrEmpty(dep.Version) ? true : dep.Version == a.GetName().Version.ToString();
+                    var dep = b_deps[i];
                     // if b depends on a, then a is "less" than b.
-                    if (dep.Dependency == a.GetName().Name && version_match) return -1;
+                    if (a.GetName().Name == dep.Name) return -1;
                 }
             }
             return 0;

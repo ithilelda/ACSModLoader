@@ -5,7 +5,7 @@ namespace MLTest
     public class TestComponent : MonoBehaviour
     {
         private float duration;
-        void FixedUpdate()
+        void Update()
         {
             duration += Time.deltaTime;
             if (duration > 1f)

@@ -1,19 +1,21 @@
 ﻿using UnityEngine;
-using ModLoader;
+using XiaWorld;
+using Harmony;
 
-[assembly: Require("YouLing100")]
+
 namespace MLTest
 {
+    [HarmonyPatch(typeof(MainManager), "Run")]
     public static class MLTest
     {
         private static GameObject go;
         private static TestComponent tc;
-        static bool Prepare()
+        static void Prefix()
         {
             KLog.Log(KLogLevel.Debug, "[MLTest] Generate GameObject and its component!");
             go = new GameObject();
             tc = go.GetComponent<TestComponent>();
-            return true;
+            GameObject.DontDestroyOnLoad(go);
         }
     }
 }

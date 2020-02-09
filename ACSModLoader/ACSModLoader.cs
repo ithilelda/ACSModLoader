@@ -3,140 +3,113 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using Harmony;
+using Mono.Cecil;
 
 namespace ModLoader
 {
 	public static class ModLoader
 	{
-		private static string RootPath;
+		public static string RootPath { get; private set; }
+		public static string ManagedPath { get; private set; }
         private static readonly string MOD_DIR_NAME = "Mods";
-		private static StreamWriter Log;
+        private static readonly string MANAGED_DIR_NAME = "Amazing Cultivation Simulator_Data\\Managed";
+		private static StreamWriter log;
 		public static void Main()
 		{
-			new Thread(() =>
-			{
-				Thread.Sleep(5000);
-				Run();
-			}).Start();
-		}
-		public static void Run()
-		{
-            Log = new StreamWriter("ModLoader.log");
+			log = new StreamWriter("ModLoader.log");
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
-			RootPath = Directory.GetCurrentDirectory();
-            Log.WriteLine($"it worked! RootPath: {RootPath}");
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += HandleRelefectionOnlyResolve;
+            RootPath = Directory.GetCurrentDirectory();
+            ManagedPath = Path.Combine(RootPath, MANAGED_DIR_NAME);
+			try
+			{
+				// for every assembly that has a bck file, it is a previously patched file.
+				// we remove it and restore the bck file.
+                var bcks = Directory.GetFiles(ManagedPath, "*.bck", SearchOption.AllDirectories);
+				foreach(var bck in bcks)
+				{
+					var asmFile = Path.ChangeExtension(bck, "dll");
+					File.Delete(asmFile);
+					File.Copy(bck, asmFile);
+				}
+				// load and patch prepatchers.
+				var asms = LoadAll();
+				var patcher_suc = AssemblyLoader.ApplyPreLoaderPatches(asms);
+                if (patcher_suc)
+                {
+                    Log("All preloader patchers successfully loaded!");
+                }
+                else
+                {
+                    Log("Some patchers cannot be patched! Please check previous lines for error report!");
+                }
+                new Thread(() =>
+				{
+					Thread.Sleep(5000);
+					var harmony_suc = AssemblyLoader.ApplyHarmonyPatches(asms);
+					if (harmony_suc)
+					{
+						Log("All Harmony mods successfully loaded!");
+					}
+					else
+					{
+						Log("Some mods cannot be patched! Please check previous lines for error report!");
+					}
+				}).Start();
+			}
+            catch (Exception ex)
+            {
+                Log(ex.Message);
+            }
+            finally
+            {
+                log.Close();
+            }
+		}
+        public static void Log(string line)
+        {
+            log.WriteLine("[ModLoader]" + line);
+        }
+        
+		private static List<Assembly> LoadAll()
+		{
+            Log($"Welcome to ModLoader! RootPath: {RootPath}");
 			var modPath = Path.Combine(RootPath, MOD_DIR_NAME);
 			if (!Directory.Exists(modPath))
 			{
 				Directory.CreateDirectory(modPath);
 			}
 			var files = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
-			try
-			{
-				ModLoader.ApplyHarmonyPatches(ModLoader.PreloadModAssemblies(files));
-                Log.WriteLine("All mods successfully loaded!");
-			}
-			catch (Exception ex)
-			{
-                Log.WriteLine(ex.Message);
-			}
-			finally
-			{
-				Log.Close();
-			}
+            var asms = AssemblyLoader.PreloadAssemblies(files);
+            asms = AssemblyLoader.SortDependencies(asms);
+            asms = AssemblyLoader.LoadAssemblies(asms);
+			return asms;
 		}
-
-		// this handler add the game root path to the resolving path.
-		private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs args)
-		{
-            var t = args.Name.Split(',');
-			var fileName = t[0].Trim() + ".dll";
-			Log.WriteLine($"current resolving assembly is: {fileName}");
-			var rootFile = Path.Combine(RootPath, fileName);
-			if(File.Exists(rootFile))
-			{
-				return Assembly.LoadFile(rootFile);
-			}
-			else return null;
-		}
-
-        private static List<Assembly> PreloadModAssemblies(string[] files)
+        private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
         {
-            Log.WriteLine("Pre-Loading mod assemblies");
-            var result = new List<Assembly>();
-            var failed = new List<string>();
-			for(int i = 0; i < files.Length; i++)
-			{
-				var fileName = files[i];
-				var fileInfo = new FileInfo(fileName);
-				// we exclude errogenous libraries that may be a problem.
-				if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower() == "acsmodloader"))
-				{
-					try
-					{
-						var assembly = Assembly.ReflectionOnlyLoadFrom(fileName);
-						if (result.Contains(assembly))
-						{
-							Log.WriteLine("Skipping duplicate mod " + fileName);
-						}
-						else
-						{
-							Log.WriteLine("Preloading " + fileName);
-							result.Add(assembly);
-						}
-					}
-					catch (Exception ex)
-					{
-						failed.Add(fileInfo.Name);
-						Log.WriteLine("Preloading mod " + fileInfo.Name + " failed!");
-						Log.WriteLine(ex.Message);
-					}
-				}
-			}
-            if (failed.Count > 0)
+            var t = arg.Name.Split(',');
+            var fileName = t[0].Trim() + ".dll";
+            Log($"the current resolving assembly is: {fileName}");
+            var rootFile = Path.Combine(RootPath, fileName);
+            if (File.Exists(rootFile))
             {
-                var text = "\nThe following mods could not be pre-loaded:\n" + string.Join("\n\t", failed.ToArray());
-                Log.WriteLine(text);
+                return Assembly.LoadFile(rootFile);
             }
-            Log.WriteLine("Sorting Dependencies");
-			result.Sort(new AssemblyComparer());
-            return result;
+            else return null;
         }
-		private static List<Assembly> ApplyHarmonyPatches(List<Assembly> modAssemblies)
+		private static Assembly HandleRelefectionOnlyResolve(object sender, ResolveEventArgs arg)
 		{
-            Log.WriteLine("Applying Harmony patches");
-            var result = new List<Assembly>();
-			var failed = new List<string>();
-			foreach (var assembly in modAssemblies)
-			{
-				if (assembly != null)
-				{
-					try
-					{
-                        Log.WriteLine("Loading: " + assembly.FullName);
-						var patch = Assembly.LoadFile(assembly.Location);
-						var harmonyInstance = HarmonyInstance.Create(patch.FullName);
-						if (harmonyInstance != null)
-						{
-							harmonyInstance.PatchAll(patch);
-						}
-						result.Add(patch);
-					}
-					catch (Exception ex)
-					{
-						failed.Add(assembly.GetName().ToString());
-                        Log.WriteLine("Patching mod " + assembly.GetName() + " failed!");
-                        Log.WriteLine(ex.Message);
-					}
-				}
-			}
-			if (failed.Count > 0)
-			{
-				var text = "\nThe following mods could not be patched:\n" + string.Join("\n\t", failed.ToArray());
-                Log.WriteLine(text);
-			}
-			return result;
+            var t = arg.Name.Split(',');
+            var fileName = t[0].Trim() + ".dll";
+            Log($"the current resolving reflection-only assembly is: {fileName}");
+            var modPath = Path.Combine(RootPath, MOD_DIR_NAME);
+			var file = Path.Combine(modPath, fileName);
+            if (File.Exists(file))
+            {
+                return Assembly.ReflectionOnlyLoadFrom(file);
+            }
+            else return null;
 		}
+		
 	}
 }
