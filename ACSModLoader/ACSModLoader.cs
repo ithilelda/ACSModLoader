@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Reflection;
 using System.Collections.Generic;
 using log4net;
@@ -41,7 +42,7 @@ namespace ModLoader
 					File.Copy(bck, asmFile);
 				}
                 // patch what we need to patch.
-                PatchAssemblyCSharp();
+                //PatchAssemblyCSharp();
                 // load all correct assemblies and separate them into the lists.
                 LoadedAssemblies = LoadAll();
                 // patch the preload patchers.
@@ -54,6 +55,11 @@ namespace ModLoader
                 {
                     Log.Debug("Some patchers cannot be patched! Please check previous lines for error report!");
                 }
+                new Thread( () =>
+                {
+                    Thread.Sleep(5000);
+                    ApplyHarmony();
+                }).Start();
 			}
             catch (Exception ex)
             {
@@ -81,8 +87,8 @@ namespace ModLoader
             File.Copy(dll_file, tmp_file);
             var assembly_csharp = AssemblyDefinition.ReadAssembly(tmp_file);
             var mainManagerType = assembly_csharp.MainModule.Types.First(t => t.Name == "MainManager");
-            var initMethod = mainManagerType.Methods.First(m => m.Name == "Init");
-            if (initMethod == null) throw new Exception("init method of mainmanager not found!");
+            var initMethod = mainManagerType.Methods.First(m => m.Name == "DoPreInit");
+            if (initMethod == null) throw new Exception("DoPreInit method of MainManager not found!");
             var processor = initMethod.Body.GetILProcessor();
             var first = processor.Body.Instructions.First();
             var callHarmony = assembly_csharp.MainModule.ImportReference(typeof(ModLoader).GetMethod("ApplyHarmony"));

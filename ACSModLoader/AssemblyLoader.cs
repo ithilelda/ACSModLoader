@@ -80,7 +80,7 @@ namespace ModLoader
             }
             return result;
         }
-        public static bool ApplyPreLoaderPatches(List<Assembly> asms)
+        public static bool ApplyPreLoaderPatches(IEnumerable<Assembly> asms)
         {
             ModLoader.Log.Debug("Applying preloader patches");
             var failed = new List<string>();
@@ -113,9 +113,14 @@ namespace ModLoader
                                 // the entry method is a public static void Enter(ModuleDefinition module).
                                 var entry = type.GetMethod("Enter", BindingFlags.Public | BindingFlags.Static);
                                 if (entry == null) throw new Exception("no entry method found in the patcher class!");
-                                var asm = AssemblyDefinition.ReadAssembly(targetFile);
+                                // create the tmp file and read it for patching.
+                                File.Delete(tmpFile);
+                                File.Copy(targetFile, tmpFile);
+                                var asm = AssemblyDefinition.ReadAssembly(tmpFile);
                                 entry.Invoke(null, new object[] { asm.MainModule });
+                                asm.Write(targetFile);
                                 asm.Dispose();
+                                File.Delete(tmpFile);
                                 break; // once we found the type and called Enter, we break the loop. There is only one enter allowed each patcher.
                             }
                         }
@@ -136,7 +141,7 @@ namespace ModLoader
             }
             return true;
         }
-        public static bool ApplyHarmonyPatches(List<Assembly> asms)
+        public static bool ApplyHarmonyPatches(IEnumerable<Assembly> asms)
         {
             ModLoader.Log.Debug("Applying Harmony patches");
             var failed = new List<string>();
