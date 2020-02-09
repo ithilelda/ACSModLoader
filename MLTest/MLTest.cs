@@ -5,12 +5,12 @@ using Harmony;
 
 namespace MLTest
 {
-    [HarmonyPatch(typeof(MainManager), "Run")]
+    [HarmonyPatch(typeof(MainManager), "Init")]
     public static class MLTest
     {
         private static GameObject go;
         private static TestComponent tc;
-        static void Prefix()
+        static void Postfix()
         {
             KLog.Log(KLogLevel.Debug, "[MLTest] Generate GameObject and its component!");
             go = new GameObject();

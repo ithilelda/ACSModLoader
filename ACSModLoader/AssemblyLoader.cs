@@ -10,85 +10,79 @@ namespace ModLoader
 {
     public static class AssemblyLoader
     {
-        public static List<Assembly> PreloadAssemblies(string[] files)
+        public static List<Assembly> PreLoadAssemblies(string[] files)
         {
-            ModLoader.Log("Pre-Loading assemblies");
+            ModLoader.Log.Debug("Pre-Loading assemblies");
             var result = new List<Assembly>();
             var failed = new List<string>();
             for (int i = 0; i < files.Length; i++)
             {
-                var fileName = files[i];
-                var fileInfo = new FileInfo(fileName);
+                var file = files[i];
+                var fileName = Path.GetFileName(file);
                 // we exclude errogenous libraries that may be a problem.
-                if (!(fileInfo.Name.ToLower() == "0harmony") && !(fileInfo.Name.ToLower() == "acsmodloader") && !(fileInfo.Name.ToLower() == "mono.cecil"))
+                if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower() == "acsmodloader") && !(fileName.ToLower() == "mono.cecil"))
                 {
                     try
                     {
-                        var assembly = Assembly.ReflectionOnlyLoadFrom(fileName);
+                        var assembly = Assembly.ReflectionOnlyLoadFrom(file);
                         if (result.Contains(assembly))
                         {
-                            ModLoader.Log($"Skipping duplicate assembly: {fileInfo.Name}");
+                            ModLoader.Log.Debug($"Skipping duplicate assembly: {fileName}");
                         }
                         else
                         {
-                            ModLoader.Log($"Preloading: {fileInfo.Name}");
+                            ModLoader.Log.Debug($"Pre-Loading assembly: {fileName}");
                             result.Add(assembly);
                         }
                     }
                     catch (Exception ex)
                     {
-                        failed.Add(fileInfo.Name);
-                        ModLoader.Log($"Preloading assembly: {fileInfo.Name} failed!");
-                        ModLoader.Log(ex.Message);
+                        failed.Add(fileName);
+                        ModLoader.Log.Debug($"Pre-Loading assembly: {fileName} failed!");
+                        ModLoader.Log.Debug(ex.Message);
                     }
                 }
             }
             if (failed.Count > 0)
             {
                 var text = "\nThe following assemblies could not be pre-loaded:\n" + string.Join("\n\t", failed.ToArray());
-                ModLoader.Log(text);
+                ModLoader.Log.Debug(text);
             }
             return result;
         }
-        public static List<Assembly> SortDependencies(List<Assembly> asms)
-        {
-            ModLoader.Log("sorting dependencies");
-            asms.Sort(new AssemblyComparer());
-            return asms;
-        }
         public static List<Assembly> LoadAssemblies(List<Assembly> asms)
         {
-            ModLoader.Log("Loading assemblies into memory");
+            ModLoader.Log.Debug("Loading assemblies into memory");
             var result = new List<Assembly>();
             var failed = new List<string>();
-            foreach(var asm in asms)
+            foreach (var asm in asms)
             {
                 if (asm != null)
                 {
                     try
                     {
-                        ModLoader.Log($"Loading: {asm.FullName}");
+                        ModLoader.Log.Debug($"Loading: {asm.FullName}");
                         var loaded = Assembly.LoadFile(asm.Location);
                         result.Add(loaded);
                     }
                     catch (Exception ex)
                     {
                         failed.Add(asm.GetName().ToString());
-                        ModLoader.Log($"loading assembly {asm.GetName()} failed!");
-                        ModLoader.Log(ex.Message);
+                        ModLoader.Log.Debug($"loading assembly {asm.GetName()} failed!");
+                        ModLoader.Log.Debug(ex.Message);
                     }
                 }
             }
             if (failed.Count > 0)
             {
                 var text = "\nThe following assemblies could not be loaded:\n" + string.Join("\n\t", failed.ToArray());
-                ModLoader.Log(text);
+                ModLoader.Log.Debug(text);
             }
             return result;
         }
         public static bool ApplyPreLoaderPatches(List<Assembly> asms)
         {
-            ModLoader.Log("Applying preloader patches");
+            ModLoader.Log.Debug("Applying preloader patches");
             var failed = new List<string>();
             foreach (var assembly in asms)
             {
@@ -102,11 +96,11 @@ namespace ModLoader
                             var preloaderAttr = Attribute.GetCustomAttribute(type, typeof(PreLoaderPatcherAttribute)) as PreLoaderPatcherAttribute;
                             if (preloaderAttr != null)
                             {
-                                ModLoader.Log($"applying preloader patch: {assembly.FullName}");
+                                ModLoader.Log.Debug($"applying preloader patch: {assembly.FullName}");
                                 var target = preloaderAttr.Target + ".dll";
-                                var backup = preloaderAttr.Target + ".bck";
                                 var targetFile = Path.Combine(ModLoader.ManagedPath, target);
-                                var backupFile = Path.Combine(ModLoader.ManagedPath, backup);
+                                var backupFile = Path.ChangeExtension(targetFile, "bck");
+                                var tmpFile = Path.ChangeExtension(targetFile, "tmp");
                                 if (!File.Exists(targetFile))
                                 {
                                     throw new Exception("patcher target invalid!"); // if the target is invalid, we throw an exception to goto the catch block.
@@ -116,7 +110,7 @@ namespace ModLoader
                                 {
                                     File.Copy(targetFile, backupFile);
                                 }
-                                // the entry method is a public static void Enter(ModuleDefinition mod).
+                                // the entry method is a public static void Enter(ModuleDefinition module).
                                 var entry = type.GetMethod("Enter", BindingFlags.Public | BindingFlags.Static);
                                 if (entry == null) throw new Exception("no entry method found in the patcher class!");
                                 var asm = AssemblyDefinition.ReadAssembly(targetFile);
@@ -129,22 +123,22 @@ namespace ModLoader
                     catch (Exception ex)
                     {
                         failed.Add(assembly.GetName().ToString());
-                        ModLoader.Log($"Patching mod {assembly.GetName()} failed!");
-                        ModLoader.Log(ex.Message);
+                        ModLoader.Log.Debug($"Patching mod {assembly.GetName()} failed!");
+                        ModLoader.Log.Debug(ex.Message);
                     }
                 }
             }
             if (failed.Count > 0)
             {
                 var text = "\nThe following preloaders could not be patched:\n" + string.Join("\n\t", failed.ToArray());
-                ModLoader.Log(text);
+                ModLoader.Log.Debug(text);
                 return false;
             }
             return true;
         }
         public static bool ApplyHarmonyPatches(List<Assembly> asms)
         {
-            ModLoader.Log("Applying Harmony patches");
+            ModLoader.Log.Debug("Applying Harmony patches");
             var failed = new List<string>();
             foreach (var assembly in asms)
             {
@@ -152,31 +146,22 @@ namespace ModLoader
                 {
                     try
                     {
-                        var types = assembly.GetTypes();
-                        foreach(var type in types)
-                        {
-                            var harmonyAttr = Attribute.GetCustomAttribute(type, typeof(HarmonyPatch));
-                            if (harmonyAttr != null)
-                            {
-                                ModLoader.Log($"Applying harmony patch: {assembly.FullName}");
-                                var harmonyInstance = HarmonyInstance.Create(assembly.FullName);
-                                harmonyInstance?.PatchAll(assembly);
-                                break;
-                            }
-                        }
+                    ModLoader.Log.Debug($"Applying harmony patch: {assembly.FullName}");
+                    var harmonyInstance = HarmonyInstance.Create(assembly.FullName);
+                    harmonyInstance?.PatchAll(assembly);
                     }
                     catch (Exception ex)
                     {
                         failed.Add(assembly.GetName().ToString());
-                        ModLoader.Log($"Patching harmony mod {assembly.GetName().Name} failed!");
-                        ModLoader.Log(ex.Message);
+                        ModLoader.Log.Debug($"Patching harmony mod {assembly.GetName().Name} failed!");
+                        ModLoader.Log.Debug(ex.Message);
                     }
                 }
             }
             if (failed.Count > 0)
             {
                 var text = "\nThe following mods could not be patched:\n" + string.Join("\n\t", failed.ToArray());
-                ModLoader.Log(text);
+                ModLoader.Log.Debug(text);
                 return false;
             }
             return true;
