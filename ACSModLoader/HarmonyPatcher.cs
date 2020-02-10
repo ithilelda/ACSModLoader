@@ -9,19 +9,12 @@ using log4net;
 
 namespace ModLoader
 {
-    public static class BootStrap
+    public static class HarmonyPatcher
     {
-        private static string ModPath;
-        private static ILog Log = LogManager.GetLogger(typeof(BootStrap));
-        static BootStrap()
-        {
-            var rootPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            ModPath = Path.Combine(rootPath, "ModLoader");
-            AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
-        }
+        private static ILog Log = LogManager.GetLogger(typeof(HarmonyPatcher));
         public static void Enter()
         {
-            var suc = ApplyHarmonyPatches(ModLoader.LoadedAssemblies);
+            var suc = Apply(ModLoader.LoadedAssemblies);
             if (suc)
             {
                 Log.Debug("All harmony patchs successfully loaded!");
@@ -31,7 +24,7 @@ namespace ModLoader
                 Log.Debug("Some harmony patchs cannot be patched! Please check previous lines for error report!");
             }
         }
-        private static bool ApplyHarmonyPatches(IEnumerable<Assembly> asms)
+        private static bool Apply(IEnumerable<Assembly> asms)
         {
             Log.Debug("Applying Harmony patches");
             var failed = new List<string>();
@@ -60,17 +53,6 @@ namespace ModLoader
                 return false;
             }
             return true;
-        }
-        private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
-        {
-            var fileName = new AssemblyName(arg.Name).Name + ".dll";
-            Log.Debug($"the current resolving assembly is: {fileName}");
-            var file = Path.Combine(ModPath, fileName);
-            if (File.Exists(file))
-            {
-                return Assembly.LoadFrom(file);
-            }
-            else return null;
         }
     }
 }

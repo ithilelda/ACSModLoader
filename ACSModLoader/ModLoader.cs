@@ -60,7 +60,7 @@ namespace ModLoader
 		}
         private static void PatchAssemblyCSharp()
         {
-            // house keeping the assembly-csharp.dll file.
+            // house keeping the assembly-csharp.dll files.
             var dll_file = Path.Combine(ManagedPath, "Assembly-CSharp.dll");
             if(!File.Exists(dll_file)) throw new Exception("Assembly-CSharp.dll cannot be found! Check your folder!");
             var bck_file = Path.ChangeExtension(dll_file, "bck");
@@ -68,27 +68,16 @@ namespace ModLoader
             var tmp_file = Path.ChangeExtension(dll_file, "tmp");
             File.Delete(tmp_file);
             File.Copy(dll_file, tmp_file);
-            
             try
             {
-                // house keeping the ACSModLoader.BootStrap.dll file.
-                var source_bs = Path.Combine(ModLoaderPath, "ACSModLoader.BootStrap.dll");
-                if(!File.Exists(source_bs)) throw new Exception("the bootstrapper dll does not exist! Check your installation!");
-                var target_bs = Path.Combine(ManagedPath, "ACSModLoader.BootStrap.dll");
-                File.Delete(target_bs);
-                File.Copy(source_bs, target_bs);
-
                 // reading the assemblies.
                 var resolver = new DefaultAssemblyResolver();
                 resolver.AddSearchDirectory(ModLoaderPath);
                 resolver.AddSearchDirectory(ManagedPath);
                 var readerParam = new ReaderParameters { AssemblyResolver = resolver };
                 var assembly_csharp = AssemblyDefinition.ReadAssembly(tmp_file, readerParam);
-                var bootstrapper = AssemblyDefinition.ReadAssembly(target_bs, readerParam);
-
                 // get the patcher in bootstrapper.
-                var bootstrapType = bootstrapper.MainModule.Types.First(t => t.Name == "BootStrap");
-                var entryPoint = bootstrapType.Methods.First(m => m.Name == "Enter");
+                var entryPoint = typeof(HarmonyPatcher).GetMethod("Enter");
                 var callHarmony = assembly_csharp.MainModule.ImportReference(entryPoint);
                 // get the target method in assembly-csharp.
                 var mainManagerType = assembly_csharp.MainModule.Types.First(t => t.Name == "MainManager");
@@ -99,7 +88,6 @@ namespace ModLoader
                 processor.InsertBefore(last, processor.Create(OpCodes.Call, callHarmony));
                 assembly_csharp.Write(dll_file);
                 assembly_csharp.Dispose();
-                bootstrapper.Dispose();
             }
             catch(Exception e)
             {
