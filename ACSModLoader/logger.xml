@@ -1,8 +1,10 @@
 <log4net>
     <appender name="ModLoaderFile" type="log4net.Appender.FileAppender">
-        <file value="ModLoader.log" />
+        <file value="ModLoader/ModLoader.log" />
         <appendToFile value="false" />
-        <layout type="log4net.Layout.SimpleLayout" />
+        <layout type="log4net.Layout.PatternLayout">
+            <conversionPattern value="%date [%thread] %-5level [%logger] - %message%newline" />
+        </layout>
     </appender>
 
     <root>

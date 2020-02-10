@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ACSModLoader\ACSModLoader.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="1.2.0.1" />
+    <Reference Include="../lib/*.dll" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net35</TargetFramework>
+  </PropertyGroup>
+
+</Project>
