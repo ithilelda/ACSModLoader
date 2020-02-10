@@ -91,12 +91,12 @@ namespace ModLoader
                 var entryPoint = bootstrapType.Methods.First(m => m.Name == "Enter");
                 var callHarmony = assembly_csharp.MainModule.ImportReference(entryPoint);
                 // get the target method in assembly-csharp.
-                var mainManagerType = assembly_csharp.MainModule.Types.First(t => t.Name == "LuaMgr");
-                var initMethod = mainManagerType.Methods.First(m => m.Name == "Init");
-                if (initMethod == null) throw new Exception("Init method of LuaMgr not found!");
-                var processor = initMethod.Body.GetILProcessor();
-                var first = processor.Body.Instructions.First();
-                processor.InsertBefore(first, processor.Create(OpCodes.Call, callHarmony));
+                var mainManagerType = assembly_csharp.MainModule.Types.First(t => t.Name == "MainManager");
+                var ctor = mainManagerType.Methods.First(m => m.Name == ".ctor");
+                if (ctor == null) throw new Exception("constructor of MainManager not found!");
+                var processor = ctor.Body.GetILProcessor();
+                var last = processor.Body.Instructions.Last();
+                processor.InsertBefore(last, processor.Create(OpCodes.Call, callHarmony));
                 assembly_csharp.Write(dll_file);
                 assembly_csharp.Dispose();
                 bootstrapper.Dispose();

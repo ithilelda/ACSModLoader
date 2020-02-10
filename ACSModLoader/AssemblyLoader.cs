@@ -20,7 +20,7 @@ namespace ModLoader
                 var file = files[i];
                 var fileName = Path.GetFileName(file);
                 // we exclude errogenous libraries that may be a problem.
-                if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower() == "acsmodloader") && !(fileName.ToLower() == "mono.cecil"))
+                if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower() == "mono.cecil") && !(fileName.ToLower().Contains("acsmodloader")))
                 {
                     try
                     {
