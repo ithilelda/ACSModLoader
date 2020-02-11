@@ -8,33 +8,32 @@ using log4net;
 using log4net.Config;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using MethodAttributes = Mono.Cecil.MethodAttributes;
 
 
 namespace ModLoader
 {
 	public static class ModLoader
 	{
-		public static string RootPath { get; private set; }
         public static string ModLoaderPath { get; private set; }
 		public static string ManagedPath { get; private set; }
-        public static List<string> Harmonies;
+        public static readonly string MOD_DIR_NAME = "Mods";
         private static readonly ILog Log = LogManager.GetLogger(typeof(ModLoader));
-        private static readonly string MOD_DIR_NAME = "Mods";
         // Entry Point.
         // The particular signature is made to be compatible with most injectors, i.e. UnityDoorStop, UnityAssemblyInjector, etc.
 		public static void Main()
 		{
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
             var currentApp = Process.GetCurrentProcess().MainModule.FileName;
-            RootPath = Path.GetDirectoryName(currentApp);
+            var rootPath = Path.GetDirectoryName(currentApp);
             var managedExt = $@"{Path.GetFileNameWithoutExtension(currentApp)}_Data\Managed";
-            ManagedPath = Path.Combine(RootPath, managedExt);
-            ModLoaderPath = Path.Combine(RootPath, "ModLoader");
+            ManagedPath = Path.Combine(rootPath, managedExt);
+            ModLoaderPath = Path.Combine(rootPath, "ModLoader");
             var curAsm = typeof(ModLoader).Assembly;
             var loggerConfig = curAsm.GetManifestResourceNames().Single(t => t.EndsWith("logger.xml"));
             XmlConfigurator.Configure(curAsm.GetManifestResourceStream(loggerConfig));
             Log.Info("Welcome to ModLoader!");
-            Log.Debug($"RootPath: {RootPath}");
+            Log.Debug($"RootPath: {rootPath}");
             Log.Debug($"ManagedPath: {ManagedPath}");
 			try
 			{
@@ -47,19 +46,24 @@ namespace ModLoader
 					File.Delete(asmFile);
 					File.Copy(bck, asmFile);
 				}
+                // then, we copy the Bootstrapper.dll file to the managed directory.
+                var source_bs = Path.Combine(ModLoaderPath, "Bootstrapper.dll");
+                var target_bs = Path.Combine(ManagedPath, "Bootstrapper.dll");
+                File.Delete(target_bs);
+                File.Copy(source_bs, target_bs);
                 // create the mod path if not existed.
-                var modPath = Path.Combine(RootPath, MOD_DIR_NAME);
+                var modPath = Path.Combine(rootPath, MOD_DIR_NAME);
                 if (!Directory.Exists(modPath))
                 {
                     Directory.CreateDirectory(modPath);
                 }
                 // get all dll files.
                 var files = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
-                // sort them into three different lists.
-                AssemblyLoader.SortAssemblies(files, out var deps, out var preloaders, out Harmonies);
+                // sort them into two different lists.
+                AssemblyLoader.SortAssemblies(files, out var deps, out var preloaders);
                 // add our patch to the patcher list.
                 var patchers = new List<PreLoaderPatch>();
-                var patcher = new PreLoaderPatch{name = "ModLoader.Harmony", target = "Assembly-CSharp", patch = PatchAssemblyCSharpForHarmony };
+                var patcher = new PreLoaderPatch{name = "ModLoader.Bootstrapper", target = "Assembly-CSharp", patch = PatchAssemblyCSharpForHarmony };
                 patchers.Add(patcher);
                 // add patchers from sorted patcher files.
                 patchers.AddRange(PreLoaderPatcher.AddPatchesFromFiles(preloaders));
@@ -73,17 +77,20 @@ namespace ModLoader
                 Log.Debug(ex.Message);
             }
 		}
-        public static void PatchAssemblyCSharpForHarmony(ref AssemblyDefinition asm)
+        public static void PatchAssemblyCSharpForHarmony(AssemblyDefinition asm)
         {
-            var entryPoint = typeof(HarmonyPatcher).GetMethod("Enter");
-            var callHarmony = asm.MainModule.ImportReference(entryPoint);
-            // get the target method in assembly-csharp.
-            var mainManagerType = asm.MainModule.Types.First(t => t.Name == "MainManager");
-            var ctor = mainManagerType.Methods.First(m => m.Name == ".ctor");
-            if (ctor == null) throw new Exception("constructor of MainManager not found!");
-            var processor = ctor.Body.GetILProcessor();
-            var last = processor.Body.Instructions.Last();
-            processor.InsertBefore(last, processor.Create(OpCodes.Call, callHarmony));
+            var target_bs = Path.Combine(ManagedPath, "Bootstrapper.dll");
+            using (var bootStrapper = AssemblyDefinition.ReadAssembly(target_bs))
+            {
+                var mainManagerType = asm.MainModule.Types.First(t => t.Name == "MainManager");
+                // then we need to inject code into the constructor.
+                var ctor = mainManagerType.Methods.First(m => m.Name == ".ctor");
+                var processor = ctor.Body.GetILProcessor();
+                var last = processor.Body.Instructions.Last();
+                var entryPoint = bootStrapper.MainModule.Types.Single(t => t.Name == "Bootstrapper").Methods.Single(m => m.Name == "Enter");
+                var callEnter = asm.MainModule.ImportReference(entryPoint);
+                processor.InsertBefore(last, processor.Create(OpCodes.Call, callEnter));
+            }
         }
         private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
         {

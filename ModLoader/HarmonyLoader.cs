@@ -9,12 +9,18 @@ using log4net;
 
 namespace ModLoader
 {
-    public static class HarmonyPatcher
+    public static class HarmonyLoader
     {
-        private static ILog Log = LogManager.GetLogger(typeof(HarmonyPatcher));
+        private static ILog Log = LogManager.GetLogger(typeof(HarmonyLoader));
         public static void Enter()
         {
-            var suc = Apply(ModLoader.Harmonies);
+            var currentApp = Process.GetCurrentProcess().MainModule.FileName;
+            var rootPath = Path.GetDirectoryName(currentApp);
+            var modPath = Path.Combine(rootPath, ModLoader.MOD_DIR_NAME);
+            var files = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
+            var harmonies = AssemblyLoader.SortHarmony(files);
+            var asms = AssemblyLoader.LoadAssemblies(AssemblyLoader.PreLoadAssemblies(harmonies));
+            var suc = Apply(asms);
             if (suc)
             {
                 Log.Debug("All harmony patches successfully loaded!");
@@ -24,24 +30,22 @@ namespace ModLoader
                 Log.Debug("Some harmony patches cannot be patched! Please check previous lines for error report!");
             }
         }
-        private static bool Apply(IEnumerable<string> files)
+        private static bool Apply(IEnumerable<Assembly> asms)
         {
             Log.Debug("Applying Harmony patches");
             var failed = new List<string>();
-            foreach (var file in files)
+            foreach (var assembly in asms)
             {
                 try
                 {
-                    var assembly = Assembly.LoadFrom(file);
                     Log.Debug($"Applying harmony patch: {assembly.FullName}");
                     var harmonyInstance = HarmonyInstance.Create(assembly.FullName);
                     harmonyInstance?.PatchAll(assembly);
                 }
                 catch (Exception ex)
                 {
-                    var filename = Path.GetFileNameWithoutExtension(file);
-                    failed.Add(filename);
-                    Log.Error($"Patching harmony mod {filename} failed!");
+                    failed.Add(assembly.FullName);
+                    Log.Error($"Patching harmony mod {assembly.FullName} failed!");
                     Log.Error(ex.Message);
                 }
             }

@@ -9,7 +9,7 @@ using log4net;
 
 namespace ModLoader
 {
-    public delegate void PatchEntry(ref AssemblyDefinition asm);
+    public delegate void PatchEntry(AssemblyDefinition asm);
     public class PreLoaderPatch
     {
         public string name;
@@ -77,14 +77,14 @@ namespace ModLoader
                 // create the tmp file and read it for patching.
                 File.Delete(tmpFile);
                 File.Copy(targetFile, tmpFile);
-                try
+                using (var asm = AssemblyDefinition.ReadAssembly(tmpFile))
                 {
-                    var asm = AssemblyDefinition.ReadAssembly(tmpFile);
                     foreach (var patcher in group)
                     {
                         try
                         {
-                            patcher.patch(ref asm);
+                            Log.Debug($"applying preloader patch: {patcher.name}");
+                            patcher.patch(asm);
                         }
                         catch (Exception ex)
                         {
@@ -95,14 +95,7 @@ namespace ModLoader
                     asm.Write(targetFile);
                     asm.Dispose();
                 }
-                catch(Exception ex)
-                {
-                    Log.Error(ex.Message);
-                }
-                finally
-                {
-                    File.Delete(tmpFile);
-                }
+                File.Delete(tmpFile);
             }
         }
     }
