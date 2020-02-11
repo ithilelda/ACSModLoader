@@ -27,22 +27,29 @@ namespace ModLoader
             Log.Info("Add preloader patches");
             foreach (var file in files)
             {
-                var asm = Assembly.LoadFrom(file);
-                var types = asm.GetTypes().Where(t => Attribute.GetCustomAttribute(t, typeof(PreLoaderPatchAttribute)) != null);
-                foreach (var type in types)
+                try
                 {
-                    try
+                    var asm = Assembly.LoadFrom(file);
+                    var types = asm.GetTypes().Where(t => Attribute.GetCustomAttribute(t, typeof(PreLoaderPatchAttribute)) != null);
+                    foreach (var type in types)
                     {
-                        var attr = (PreLoaderPatchAttribute) Attribute.GetCustomAttribute(type, typeof(PreLoaderPatchAttribute));
-                        var entry = (PatchEntry) Delegate.CreateDelegate(typeof(PatchEntry), type, "Patch");
-                        Log.Debug($"Found a patcher '{type.AssemblyQualifiedName}' targeting {attr.Target}.dll");
-                        patchers.Add(new PreLoaderPatch { name = type.AssemblyQualifiedName, target = attr.Target, patch = entry });
+                        try
+                        {
+                            var attr = (PreLoaderPatchAttribute) Attribute.GetCustomAttribute(type, typeof(PreLoaderPatchAttribute));
+                            var entry = (PatchEntry) Delegate.CreateDelegate(typeof(PatchEntry), type, "Patch");
+                            Log.Debug($"Found a patcher '{type.AssemblyQualifiedName}' targeting {attr.Target}.dll");
+                            patchers.Add(new PreLoaderPatch { name = type.AssemblyQualifiedName, target = attr.Target, patch = entry });
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error($"adding patcher: {type.AssemblyQualifiedName} failed!");
+                            Log.Error(ex.Message);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"adding patcher: {type.AssemblyQualifiedName} failed!");
-                        Log.Error(ex.Message);
-                    }
+                }
+                catch(Exception ex)
+                {
+                    Log.Error(ex.Message);
                 }
             }
             return patchers;

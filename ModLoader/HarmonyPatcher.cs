@@ -17,11 +17,11 @@ namespace ModLoader
             var suc = Apply(ModLoader.Harmonies);
             if (suc)
             {
-                Log.Debug("All harmony patchs successfully loaded!");
+                Log.Debug("All harmony patches successfully loaded!");
             }
             else
             {
-                Log.Debug("Some harmony patchs cannot be patched! Please check previous lines for error report!");
+                Log.Debug("Some harmony patches cannot be patched! Please check previous lines for error report!");
             }
         }
         private static bool Apply(IEnumerable<string> files)

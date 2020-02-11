@@ -46,14 +46,13 @@ namespace ModLoader
                 }
             }
         }
-        public static List<Assembly> PreLoadAssemblies(string[] files)
+        public static List<Assembly> PreLoadAssemblies(IEnumerable<string> files)
         {
             Log.Debug("Pre-Loading assemblies");
             var result = new List<Assembly>();
             var failed = new List<string>();
-            for (int i = 0; i < files.Length; i++)
+            foreach(var file in files)
             {
-                var file = files[i];
                 var fileName = Path.GetFileName(file);
                 // we exclude errogenous libraries that may be a problem.
                 if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower().Contains("mono.cecil")) && !(fileName.ToLower().Contains("acsmodloader")))
@@ -86,7 +85,7 @@ namespace ModLoader
             }
             return result;
         }
-        public static List<Assembly> LoadAssemblies(List<Assembly> asms)
+        public static List<Assembly> LoadAssemblies(IEnumerable<Assembly> asms)
         {
             Log.Debug("Loading assemblies into memory");
             var result = new List<Assembly>();

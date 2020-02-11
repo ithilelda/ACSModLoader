@@ -65,6 +65,8 @@ namespace ModLoader
                 patchers.AddRange(PreLoaderPatcher.AddPatchesFromFiles(preloaders));
                 // patch the preload patchers.
 				PreLoaderPatcher.Apply(patchers);
+                // now we load the dependecies.
+                AssemblyLoader.LoadAssemblies(AssemblyLoader.PreLoadAssemblies(deps));
 			}
             catch (Exception ex)
             {
