@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ACSModLoader\ACSModLoader.csproj" />
+    <ProjectReference Include="..\ModLoader\ModLoader.csproj" />
   </ItemGroup>
 
 </Project>
