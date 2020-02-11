@@ -8,23 +8,27 @@ namespace ModLoader
 {
     public static class Bootstrapper
     {
+        private static string ModLoaderPath;
         static Bootstrapper()
         {
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
         }
-        public static void Enter()
+        public static void Init()
+        {
+            KLog.Dbg("Initializing Bootstrapper...");
+            var currentApp = Process.GetCurrentProcess().MainModule.FileName;
+            var rootPath = Path.GetDirectoryName(currentApp);
+            ModLoaderPath = Path.Combine(rootPath, "ModLoader");
+        }
+        public static void Start()
         {
             HarmonyLoader.Enter();
         }
-        private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
+        static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
         {
             KLog.Dbg($"Calling the resolver to resolve : {arg.Name}!");
             var fileName = new AssemblyName(arg.Name).Name + ".dll";
-            var currentApp = Process.GetCurrentProcess().MainModule.FileName;
-            var rootPath = Path.GetDirectoryName(currentApp);
-            var modLoaderPath = Path.Combine(rootPath, "ModLoader");
-            var file = Path.Combine(modLoaderPath, fileName);
-            KLog.Dbg($"loading file: {file}!");
+            var file = Path.Combine(ModLoaderPath, fileName);
             if (File.Exists(file))
             {
                 return Assembly.LoadFrom(file);

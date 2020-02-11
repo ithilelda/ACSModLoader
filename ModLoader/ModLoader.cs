@@ -19,6 +19,12 @@ namespace ModLoader
 		public static string ManagedPath { get; private set; }
         public static readonly string MOD_DIR_NAME = "Mods";
         private static readonly ILog Log = LogManager.GetLogger(typeof(ModLoader));
+        static ModLoader()
+        {
+            var curAsm = typeof(ModLoader).Assembly;
+            var loggerConfig = curAsm.GetManifestResourceNames().Single(t => t.EndsWith("logger.xml"));
+            XmlConfigurator.Configure(curAsm.GetManifestResourceStream(loggerConfig));
+        }
         // Entry Point.
         // The particular signature is made to be compatible with most injectors, i.e. UnityDoorStop, UnityAssemblyInjector, etc.
 		public static void Main()
@@ -29,9 +35,6 @@ namespace ModLoader
             var managedExt = $@"{Path.GetFileNameWithoutExtension(currentApp)}_Data\Managed";
             ManagedPath = Path.Combine(rootPath, managedExt);
             ModLoaderPath = Path.Combine(rootPath, "ModLoader");
-            var curAsm = typeof(ModLoader).Assembly;
-            var loggerConfig = curAsm.GetManifestResourceNames().Single(t => t.EndsWith("logger.xml"));
-            XmlConfigurator.Configure(curAsm.GetManifestResourceStream(loggerConfig));
             Log.Info("Welcome to ModLoader!");
             Log.Debug($"RootPath: {rootPath}");
             Log.Debug($"ManagedPath: {ManagedPath}");
@@ -87,9 +90,13 @@ namespace ModLoader
                 var ctor = mainManagerType.Methods.First(m => m.Name == ".ctor");
                 var processor = ctor.Body.GetILProcessor();
                 var last = processor.Body.Instructions.Last();
-                var entryPoint = bootStrapper.MainModule.Types.Single(t => t.Name == "Bootstrapper").Methods.Single(m => m.Name == "Enter");
-                var callEnter = asm.MainModule.ImportReference(entryPoint);
-                processor.InsertBefore(last, processor.Create(OpCodes.Call, callEnter));
+                var bsType = bootStrapper.MainModule.Types.Single(t => t.Name == "Bootstrapper");
+                var initMethod = bsType.Methods.Single(m => m.Name == "Init");
+                var startMethod = bsType.Methods.Single(m => m.Name == "Start");
+                var callInit = asm.MainModule.ImportReference(initMethod);
+                var callStart = asm.MainModule.ImportReference(startMethod);
+                processor.InsertBefore(last, processor.Create(OpCodes.Call, callInit));
+                processor.InsertBefore(last, processor.Create(OpCodes.Call, callStart));
             }
         }
         private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
