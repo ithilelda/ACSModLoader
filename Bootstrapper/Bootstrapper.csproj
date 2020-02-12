@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ModLoader\ModLoader.csproj" />
-    <Reference Include="../lib/*.dll" />
   </ItemGroup>
 
 </Project>

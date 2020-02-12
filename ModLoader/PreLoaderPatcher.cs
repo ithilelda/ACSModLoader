@@ -36,6 +36,7 @@ namespace ModLoader
                         try
                         {
                             var attr = (PreLoaderPatchAttribute) Attribute.GetCustomAttribute(type, typeof(PreLoaderPatchAttribute));
+                            // the entry method signature is public static void Patch(AssemblyDefinition).
                             var entry = (PatchEntry) Delegate.CreateDelegate(typeof(PatchEntry), type, "Patch");
                             Log.Debug($"Found a patcher '{type.AssemblyQualifiedName}' targeting {attr.Target}.dll");
                             patchers.Add(new PreLoaderPatch { name = type.AssemblyQualifiedName, target = attr.Target, patch = entry });

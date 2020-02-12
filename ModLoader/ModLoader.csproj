@@ -7,7 +7,6 @@
     <PackageReference Include="Lib.Harmony" Version="1.2.0.1" />
     <PackageReference Include="log4net" Version="2.0.8" />
     <PackageReference Include="Mono.Cecil" Version="0.10.4" />
-    <Reference Include="../lib/*.dll" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="logger.xml" />
