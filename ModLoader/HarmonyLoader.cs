@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Diagnostics;
 using System.Collections.Generic;
 using Harmony;
 using log4net;
@@ -14,12 +13,13 @@ namespace ModLoader
         private static ILog Log = LogManager.GetLogger(typeof(HarmonyLoader));
         public static void Enter()
         {
-            var currentApp = Process.GetCurrentProcess().MainModule.FileName;
-            var rootPath = Path.GetDirectoryName(currentApp);
-            var modPath = Path.Combine(rootPath, ModLoader.MOD_DIR_NAME);
-            var files = Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories);
-            var harmonies = AssemblyLoader.SortHarmony(files);
-            var asms = AssemblyLoader.LoadAssemblies(AssemblyLoader.PreLoadAssemblies(harmonies));
+            List<Assembly> asms;
+            if(ModLoader.HarmonyAssemblies == null)
+            {
+                var files = Directory.GetFiles(ModLoader.ModPath, "*.dll", SearchOption.AllDirectories);
+                asms = AssemblyLoader.LoadAssemblies(AssemblyLoader.PreLoadAssemblies(files));
+            }
+            else asms = AssemblyLoader.LoadAssemblies(AssemblyLoader.PreLoadAssemblies(ModLoader.HarmonyAssemblies));
             var suc = Apply(asms);
             if (suc)
             {

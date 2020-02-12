@@ -13,10 +13,11 @@ namespace ModLoader
     public static class AssemblyLoader
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(AssemblyLoader));
-        public static void SortAssemblies(string[] files, out List<string> deps, out List<string> preloaders)
+        public static void SortAssemblies(string[] files, out List<string> deps, out List<string> preloaders, out List<string> harmonies)
         {
             deps = new List<string>();
             preloaders = new List<string>();
+            harmonies = new List<string>();
             var resolver = new DefaultAssemblyResolver();
             resolver.AddSearchDirectory(ModLoader.ModLoaderPath);
             var readerParam = new ReaderParameters { AssemblyResolver = resolver };
@@ -35,7 +36,8 @@ namespace ModLoader
                         var is_patcher = has_patcher && refs.Count() == 0;
                         var is_harmony = asmDef.MainModule.Types.FirstOrDefault(t => t.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == typeof(HarmonyPatch).FullName) != null) != null;
                         if (is_patcher) preloaders.Add(file);
-                        else if (!is_harmony) deps.Add(file);
+                        else if (is_harmony) harmonies.Add(file);
+                        else deps.Add(file);
                     }
                 }
                 catch (Exception ex)
@@ -43,29 +45,6 @@ namespace ModLoader
                     Log.Error(ex.Message); // we just print message and continue.
                 }
             }
-        }
-        public static List<string> SortHarmony(string[] files)
-        {
-            var resolver = new DefaultAssemblyResolver();
-            resolver.AddSearchDirectory(ModLoader.ModLoaderPath);
-            var readerParam = new ReaderParameters { AssemblyResolver = resolver };
-            var harmonies = new List<string>();
-            foreach (var file in files)
-            {
-                try
-                {
-                    using (var asmDef = AssemblyDefinition.ReadAssembly(file, readerParam))
-                    {
-                        var is_harmony = asmDef.MainModule.Types.FirstOrDefault(t => t.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == typeof(HarmonyPatch).FullName) != null) != null;
-                        if (is_harmony) harmonies.Add(file);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex.Message); // we just print message and continue.
-                }
-            }
-            return harmonies;
         }
         public static List<Assembly> PreLoadAssemblies(IEnumerable<string> files)
         {

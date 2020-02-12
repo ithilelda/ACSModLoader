@@ -1,21 +1,15 @@
-﻿using UnityEngine;
-using XiaWorld;
-using Harmony;
+﻿using ModLoader;
+using Mono.Cecil;
 
 
 namespace MLTest
 {
-    [HarmonyPatch(typeof(MainManager), "Init")]
+    [PreLoaderPatch("Assembly-CSharp")]
     public static class MLTest
     {
-        private static GameObject go;
-        private static TestComponent tc;
-        static void Postfix()
+        public static void Patch(AssemblyDefinition asm)
         {
-            KLog.Log(KLogLevel.Debug, "[MLTest] Generate GameObject and its component!");
-            go = new GameObject();
-            tc = go.GetComponent<TestComponent>();
-            GameObject.DontDestroyOnLoad(go);
+            
         }
     }
 }
