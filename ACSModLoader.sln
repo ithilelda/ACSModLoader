@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLTest", "MLTest\MLTest.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bootstrapper", "Bootstrapper\Bootstrapper.csproj", "{DF211ACE-C736-4DBB-A190-20533D132A4C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GOTest", "GOTest\GOTest.csproj", "{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,5 +60,17 @@ Global
 		{DF211ACE-C736-4DBB-A190-20533D132A4C}.Release|x64.Build.0 = Release|Any CPU
 		{DF211ACE-C736-4DBB-A190-20533D132A4C}.Release|x86.ActiveCfg = Release|Any CPU
 		{DF211ACE-C736-4DBB-A190-20533D132A4C}.Release|x86.Build.0 = Release|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Debug|x64.Build.0 = Debug|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Debug|x86.Build.0 = Debug|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x64.ActiveCfg = Release|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x64.Build.0 = Release|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x86.ActiveCfg = Release|Any CPU
+		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
