@@ -7,6 +7,7 @@ namespace ModLoader
         public static string GamePath { get; private set; }
         public static string WorkShopPath { get; private set; }
         public static Action<string> Log { get; private set; }
+        private static bool patched;
 
         public static void Init(string gamePath, string workShopPath, Action<string> log)
         {
@@ -17,7 +18,11 @@ namespace ModLoader
 
         public static void Start()
         {
-            HarmonyLoaderLite.Enter();
+            if(!patched)
+            {
+                HarmonyLoaderLite.Enter();
+                patched = true;
+            }
         }
     }
 }
