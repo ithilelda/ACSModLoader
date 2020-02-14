@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 
 namespace ModLoader
 {
@@ -14,8 +16,8 @@ namespace ModLoader
             GamePath = gamePath ?? throw new ArgumentNullException("gamePath");
             WorkShopPath = workShopPath ?? throw new ArgumentNullException("workShopPath");
             Log = log ?? throw new ArgumentNullException("log");
+            AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
         }
-
         public static void Start()
         {
             if(!patched)
@@ -23,6 +25,19 @@ namespace ModLoader
                 HarmonyLoaderLite.Enter();
                 patched = true;
             }
+        }
+
+        private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
+        {
+            var fileName = new AssemblyName(arg.Name).Name + ".dll";
+            Log($"the current resolving assembly is: {fileName}");
+            var thisDir = Assembly.GetExecutingAssembly().Location;
+            var file = Path.Combine(thisDir, fileName);
+            if (File.Exists(file))
+            {
+                return Assembly.LoadFrom(file);
+            }
+            else return null;
         }
     }
 }
