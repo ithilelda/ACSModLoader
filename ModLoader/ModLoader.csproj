@@ -11,6 +11,9 @@
   <ItemGroup>
     <EmbeddedResource Include="logger.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Configuration\Configuration.csproj" />
+  </ItemGroup>
   <Target Name="Merge35">
     <!-- the ILMergePath property points to the location of ILMerge.exe console application -->
     <Exec Command="bin/ilmerge/3.0.29/tools/net452/ILMerge.exe /out:ACSModLoader.dll bin/Release/net35/ACSModLoader.dll  bin/Release/net35/0Harmony.dll bin/Release/net35/log4net.dll bin/Release/net35/Mono.Cecil.dll" />
