@@ -12,7 +12,7 @@ namespace ModLoader
     {
         public static List<Assembly> PreLoadAssemblies(IEnumerable<string> files)
         {
-            ModLoaderLite.Log("Pre-Loading assemblies");
+            KLog.Dbg("Pre-Loading assemblies");
             var result = new List<Assembly>();
             var failed = new List<string>();
             foreach(var file in files)
@@ -26,32 +26,32 @@ namespace ModLoader
                         var assembly = Assembly.ReflectionOnlyLoadFrom(file);
                         if (result.Contains(assembly))
                         {
-                            ModLoaderLite.Log($"Skipping duplicate assembly: {fileName}");
+                            KLog.Dbg($"Skipping duplicate assembly: {fileName}");
                         }
                         else
                         {
-                            ModLoaderLite.Log($"Pre-Loading assembly: {fileName}");
+                            KLog.Dbg($"Pre-Loading assembly: {fileName}");
                             result.Add(assembly);
                         }
                     }
                     catch (Exception ex)
                     {
                         failed.Add(fileName);
-                        ModLoaderLite.Log($"Pre-Loading assembly: {fileName} failed!");
-                        ModLoaderLite.Log(ex.Message);
+                        KLog.Dbg($"Pre-Loading assembly: {fileName} failed!");
+                        KLog.Dbg(ex.Message);
                     }
                 }
             }
             if (failed.Count > 0)
             {
                 var text = "\nThe following assemblies could not be pre-loaded:\n" + string.Join("\n\t", failed.ToArray());
-                ModLoaderLite.Log(text);
+                KLog.Dbg(text);
             }
             return result;
         }
         public static List<Assembly> LoadAssemblies(IEnumerable<Assembly> asms)
         {
-            ModLoaderLite.Log("Loading assemblies into memory");
+            KLog.Dbg("Loading assemblies into memory");
             var result = new List<Assembly>();
             var failed = new List<string>();
             foreach (var asm in asms)
@@ -60,22 +60,22 @@ namespace ModLoader
                 {
                     try
                     {
-                        ModLoaderLite.Log($"Loading: {asm.FullName}");
+                        KLog.Dbg($"Loading: {asm.FullName}");
                         var loaded = Assembly.LoadFrom(asm.Location);
                         result.Add(loaded);
                     }
                     catch (Exception ex)
                     {
                         failed.Add(asm.GetName().ToString());
-                        ModLoaderLite.Log($"loading assembly {asm.GetName()} failed!");
-                        ModLoaderLite.Log(ex.Message);
+                        KLog.Dbg($"loading assembly {asm.GetName()} failed!");
+                        KLog.Dbg(ex.Message);
                     }
                 }
             }
             if (failed.Count > 0)
             {
                 var text = "\nThe following assemblies could not be loaded:\n" + string.Join("\n\t", failed.ToArray());
-                ModLoaderLite.Log(text);
+                KLog.Dbg(text);
             }
             return result;
         }
