@@ -1,12 +1,10 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
-using Harmony;
 
 
-namespace ModLoader
+namespace ModLoaderLite
 {
     public static class AssemblyLoaderLite
     {

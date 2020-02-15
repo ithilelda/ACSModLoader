@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace ModLoader
+namespace ModLoaderLite
 {
     public static class Extensions
     {
@@ -17,11 +17,11 @@ namespace ModLoader
         {
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
         }
-        public void Load(string path)
+        public void Load(string path, string assemblyName="", string typeFullName="")
         {
             if(!patched.TryGetValueOrDefault(path))
             {
-                HarmonyLoaderLite.Enter(path);
+                HarmonyLoaderLite.Enter(path, assemblyName, typeFullName);
                 patched[path] = true;
             }
         }
