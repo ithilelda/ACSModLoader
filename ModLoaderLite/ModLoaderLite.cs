@@ -1,30 +1,28 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace ModLoader
 {
+    public static class Extensions
+    {
+        public static bool TryGetValueOrDefault(this Dictionary<string, bool> d, string key) => d.TryGetValue(key, out var ret) ? ret : default;
+    }
     public class ModLoaderLite
     {
-        public string GamePath { get; private set; }
-        public string[] ModPaths { get; private set; }
-        private static bool patched;
+        private static Dictionary<string, bool> patched = new Dictionary<string, bool>();
 
         public ModLoaderLite()
         {
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
         }
-        public void Init(string gamePath, string[] modPaths)
+        public void Load(string path)
         {
-            GamePath = gamePath ?? throw new ArgumentNullException("gamePath");
-            ModPaths = modPaths ?? throw new ArgumentNullException("workShopPath");
-        }
-        public void Start()
-        {
-            if(!patched)
+            if(!patched.TryGetValueOrDefault(path))
             {
-                HarmonyLoaderLite.Enter(GamePath, ModPaths);
-                patched = true;
+                HarmonyLoaderLite.Enter(path);
+                patched[path] = true;
             }
         }
 

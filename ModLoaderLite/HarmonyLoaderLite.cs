@@ -9,23 +9,18 @@ namespace ModLoader
 {
     public static class HarmonyLoaderLite
     {
-        public static void Enter(string gamePath, string[] modPaths)
+        public static void Enter(string path)
         {
-            var allFiles = new List<string>();
-            foreach(string modPath in modPaths)
-            {
-                allFiles.AddRange(Directory.GetFiles(modPath, "*.dll", SearchOption.AllDirectories));
-            }
-            allFiles.AddRange(Directory.GetFiles(Path.Combine(gamePath, "Mods"), "*.dll", SearchOption.AllDirectories));
-            var asms = AssemblyLoaderLite.LoadAssemblies(AssemblyLoaderLite.PreLoadAssemblies(allFiles));
+            var files = Directory.GetFiles(path, "*.dll", SearchOption.AllDirectories);
+            var asms = AssemblyLoaderLite.LoadAssemblies(AssemblyLoaderLite.PreLoadAssemblies(files));
             var suc = Apply(asms);
             if (suc)
             {
-                KLog.Dbg("All harmony patches successfully loaded!");
+                KLog.Dbg($"All harmony patches successfully loaded for {path}!");
             }
             else
             {
-                KLog.Dbg("Some harmony patches cannot be patched! Please check previous lines for error report!");
+                KLog.Dbg($"Some harmony patches from {path} cannot be patched!");
             }
         }
         private static bool Apply(IEnumerable<Assembly> asms)
