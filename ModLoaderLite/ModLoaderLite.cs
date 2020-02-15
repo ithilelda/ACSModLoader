@@ -13,7 +13,7 @@ namespace ModLoader
     {
         private static Dictionary<string, bool> patched = new Dictionary<string, bool>();
 
-        public ModLoaderLite()
+        static ModLoaderLite()
         {
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
         }
