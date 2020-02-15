@@ -29,8 +29,11 @@ namespace ModLoaderLite
         private static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
         {
             var name = new AssemblyName(arg.Name).Name + ".dll";
-            var thisDir = Assembly.GetExecutingAssembly().Location;
+            //KLog.Dbg($"resolving {arg.Name}");
+            var location = Assembly.GetExecutingAssembly().Location;
+            var thisDir = Path.GetDirectoryName(location);
             var askedFile = Path.Combine(thisDir, name);
+            //KLog.Dbg($"the asked file is: {askedFile}");
             if (File.Exists(askedFile))
             {
                 var asm = Assembly.LoadFrom(askedFile);
