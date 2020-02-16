@@ -11,10 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bootstrapper", "Bootstrappe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GOTest", "GOTest\GOTest.csproj", "{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModLoaderLite", "ModLoaderLite\ModLoaderLite.csproj", "{B27253E4-29F5-410B-B31A-25D2131F87D7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Configuration", "Configuration\Configuration.csproj", "{7318E46F-84DD-49AF-8F31-11BECD72F584}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,29 +72,5 @@ Global
 		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x64.Build.0 = Release|Any CPU
 		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x86.ActiveCfg = Release|Any CPU
 		{6FEBE543-E4D1-40E0-98B4-8AC0BFB02973}.Release|x86.Build.0 = Release|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Debug|x64.Build.0 = Debug|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Debug|x86.Build.0 = Debug|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Release|x64.ActiveCfg = Release|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Release|x64.Build.0 = Release|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Release|x86.ActiveCfg = Release|Any CPU
-		{B27253E4-29F5-410B-B31A-25D2131F87D7}.Release|x86.Build.0 = Release|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Debug|x64.Build.0 = Debug|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Debug|x86.Build.0 = Debug|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Release|x64.ActiveCfg = Release|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Release|x64.Build.0 = Release|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Release|x86.ActiveCfg = Release|Any CPU
-		{7318E46F-84DD-49AF-8F31-11BECD72F584}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
