@@ -1,35 +1,32 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Diagnostics;
+using Serilog;
 
 
-namespace ModLoader
+namespace bootstrapper
 {
     public static class Bootstrapper
     {
-        private static string ModLoaderPath;
-
+        private readonly static string rootPath = Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH"));
         static Bootstrapper()
         {
             AppDomain.CurrentDomain.AssemblyResolve += HandleAssemblyResolve;
         }
-        public static void Init()
+        public static void Main()
         {
-            //KLog.Dbg("Initializing Bootstrapper...");
-            var currentApp = Process.GetCurrentProcess().MainModule.FileName;
-            var rootPath = Path.GetDirectoryName(currentApp);
-            ModLoaderPath = Path.Combine(rootPath, "ModLoader");
-        }
-        public static void Start()
-        {
-            HarmonyLoader.Enter();
+            var logFile = Path.Combine(rootPath, $"log.log");
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.File(logFile)
+                .CreateLogger();
+            Log.Information(" [BootStrapper] The bootstrapper is running in {@ModPath}!", rootPath);
+            ModLoader.ModLoader.Init();
         }
         static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
         {
-            //KLog.Dbg($"Calling the resolver to resolve : {arg.Name}!");
             var fileName = new AssemblyName(arg.Name).Name + ".dll";
-            var fileInModLoader = Path.Combine(ModLoaderPath, fileName);
+            var fileInModLoader = Path.Combine(rootPath, fileName);
             if (File.Exists(fileInModLoader))
             {
                 return Assembly.LoadFrom(fileInModLoader);
