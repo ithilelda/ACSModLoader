@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
 using Serilog;
 using HarmonyLib;
 
@@ -13,21 +11,17 @@ namespace ModLoader.Utilities
         public static Assembly PreLoadAssembly(string file)
         {
             var fileName = Path.GetFileName(file);
-            // we exclude errogenous libraries that may be a problem.
-            if (!(fileName.ToLower() == "0harmony") && !(fileName.ToLower().Contains("ModLoader")))
+            try
             {
-                try
-                {
-                    Log.Debug($"[ModLoader] Pre-Loading: {fileName}");
-                    var assembly = Assembly.ReflectionOnlyLoadFrom(file);
-                    return assembly;
-                }
-                catch (Exception ex)
-                {
-                    Log.Debug($"[ModLoader] Pre-Loading assembly {fileName} failed!");
-                    Log.Debug(ex.Message);
-                    Log.Debug(ex.StackTrace);
-                }
+                ModLoader.Logger.Debug($"Pre-Loading: {fileName}");
+                var assembly = Assembly.ReflectionOnlyLoadFrom(file);
+                return assembly;
+            }
+            catch (Exception ex)
+            {
+                ModLoader.Logger.Debug($"Pre-Loading assembly {fileName} failed!");
+                ModLoader.Logger.Debug(ex.Message);
+                ModLoader.Logger.Debug(ex.StackTrace);
             }
             return null;
         }
@@ -37,15 +31,15 @@ namespace ModLoader.Utilities
             {
                 try
                 {
-                    Log.Debug($"[ModLoader] Loading: {asm.FullName}");
+                    ModLoader.Logger.Debug($"Loading: {asm.FullName}");
                     var loaded = Assembly.LoadFrom(asm.Location);
                     return loaded;
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug($"[ModLoader] loading assembly {asm.GetName()} failed!");
-                    Log.Debug(ex.Message);
-                    Log.Debug(ex.StackTrace);
+                    ModLoader.Logger.Debug($"loading assembly {asm.GetName()} failed!");
+                    ModLoader.Logger.Debug(ex.Message);
+                    ModLoader.Logger.Debug(ex.StackTrace);
                 }
             }
             return null;
@@ -57,17 +51,17 @@ namespace ModLoader.Utilities
                 var harmony_name = string.IsNullOrEmpty(name) ? asm.FullName : name;
                 try
                 {
-                    Log.Debug($"[ModLoader] Applying harmony patch: {harmony_name}");
+                    ModLoader.Logger.Debug($"Applying harmony patch: {harmony_name}");
                     var harmonyInstance = new Harmony(harmony_name);
                     harmonyInstance?.PatchAll(asm);
-                    Log.Debug($"[ModLoader] Applying patch {harmony_name} succeeded!");
+                    ModLoader.Logger.Debug($"Applying patch {harmony_name} succeeded!");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug($"[ModLoader] Patching harmony mod {harmony_name} failed!");
-                    Log.Debug(ex.Message);
-                    Log.Debug(ex.StackTrace);
+                    ModLoader.Logger.Debug($"Patching harmony mod {harmony_name} failed!");
+                    ModLoader.Logger.Debug(ex.Message);
+                    ModLoader.Logger.Debug(ex.StackTrace);
                 }
             }
             return false;
@@ -79,24 +73,24 @@ namespace ModLoader.Utilities
                 try
                 {
                     var name = asm.GetName().Name;
-                    Log.Debug($"[ModLoader] calling the {method} method for {name}...");
+                    ModLoader.Logger.Debug($"calling the {method} method for {name}...");
                     asm.GetType($"{name}.{name}")?.GetMethod(method)?.Invoke(null, null);
                 }
                 catch (ArgumentException ae)
                 {
-                    Log.Debug(ae.Message);
+                    ModLoader.Logger.Debug(ae.Message);
                 }
                 catch (TargetInvocationException tie)
                 {
-                    Log.Debug($"[ModLoader] invocation of {method} in {asm.FullName} failed!");
+                    ModLoader.Logger.Debug($"invocation of {method} in {asm.FullName} failed!");
                     var ie = tie.InnerException;
-                    Log.Debug(ie.Message);
-                    Log.Debug(ie.StackTrace);
+                    ModLoader.Logger.Debug(ie.Message);
+                    ModLoader.Logger.Debug(ie.StackTrace);
                 }
                 catch (Exception e)
                 {
-                    Log.Debug(e.Message);
-                    Log.Debug(e.StackTrace);
+                    ModLoader.Logger.Debug(e.Message);
+                    ModLoader.Logger.Debug(e.StackTrace);
                 }
             }
         }

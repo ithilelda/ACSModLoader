@@ -18,9 +18,9 @@ namespace bootstrapper
             var logFile = Path.Combine(rootPath, $"log.log");
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.File(logFile)
+                .WriteTo.File(logFile, outputTemplate: "{Timestamp:u} [{Level:u3}] ({ReportId}) {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
-            Log.Information(" [BootStrapper] The bootstrapper is running in {@ModPath}!", rootPath);
+            Log.ForContext("ReportId", "BootStrapper").Information("The bootstrapper is running in {@ModPath}!", rootPath);
             ModLoader.ModLoader.Init();
         }
         static Assembly HandleAssemblyResolve(object sender, ResolveEventArgs arg)
