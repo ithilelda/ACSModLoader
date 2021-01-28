@@ -17,7 +17,7 @@ namespace ModLoader
         {
             Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.File(Path.Combine(rootPath, $"log.log"), outputTemplate: "{Timestamp:u} [{Level:u3}] ({ReportId}) {Message:lj}{NewLine}{Exception}")
+                .WriteTo.File(Path.Combine(rootPath, @"log\log.log"), outputTemplate: "{Timestamp:u} [{Level:u3}] ({ReportId}) {Message:lj}{NewLine}{Exception}")
                 .CreateLogger()
                 .ForContext("ReportId", "ModLoader");
         }
