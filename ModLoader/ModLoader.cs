@@ -9,15 +9,23 @@ namespace ModLoader
     public static class ModLoader
     {
         static List<Assembly> assemblies = new List<Assembly>();
-        readonly static string rootPath = Path.GetDirectoryName(Environment.GetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH"));
+        readonly static string rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        public static ILogger Logger = Log.Logger.ForContext("ReportId", "ModLoader");
+        public static ILogger Logger;
+
+        static ModLoader()
+        {
+            Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.File(Path.Combine(rootPath, $"log.log"), outputTemplate: "{Timestamp:u} [{Level:u3}] ({ReportId}) {Message:lj}{NewLine}{Exception}")
+                .CreateLogger()
+                .ForContext("ReportId", "ModLoader");
+        }
 
         // single time method that loads the assemblies and applies harmony patches.
         // also calls the oninit events that ought to be run only once each game.
-        public static void Init()
+        public static void Main()
         {
-            //var logFile = Path.Combine(rootPath, "ModLoader.log");
             Logger.Debug("patching the game with ModLoader patches...");
             Logger.Debug("loading assemblies...");
             var modDirs = Directory.GetDirectories(rootPath);
