@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using Serilog;
-using HarmonyLib;
 
 namespace ModLoader.Utilities
 {
@@ -43,28 +41,6 @@ namespace ModLoader.Utilities
                 }
             }
             return null;
-        }
-        public static bool ApplyHarmony(Assembly asm, string name)
-        {
-            if(asm != null)
-            {
-                var harmony_name = string.IsNullOrEmpty(name) ? asm.FullName : name;
-                try
-                {
-                    ModLoader.Logger.Debug($"Applying harmony patch: {harmony_name}");
-                    var harmonyInstance = new Harmony(harmony_name);
-                    harmonyInstance?.PatchAll(asm);
-                    ModLoader.Logger.Debug($"Applying patch {harmony_name} succeeded!");
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    ModLoader.Logger.Debug($"Patching harmony mod {harmony_name} failed!");
-                    ModLoader.Logger.Debug(ex.Message);
-                    ModLoader.Logger.Debug(ex.StackTrace);
-                }
-            }
-            return false;
         }
         public static void Call(Assembly asm, string method)
         {
