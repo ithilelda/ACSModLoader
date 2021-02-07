@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
-using Serilog;
+using NLog;
 
 namespace ModLoader
 {
@@ -10,15 +10,15 @@ namespace ModLoader
     {
         public readonly static string rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         public static List<Assembly> LoadedAssemblies { get; set; } = new List<Assembly>();
-        public static ILogger Logger;
+        public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
         static ModLoader()
         {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(Path.Combine(rootPath, @"log\log.log"), outputTemplate: "{Timestamp:u} [{Level:u3}] ({ReportId}) {Message:lj}{NewLine}{Exception}")
-                .CreateLogger();
-            Logger = Log.ForContext("ReportId", "ModLoader");
+            var config = new NLog.Config.LoggingConfiguration();
+            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = Path.Combine(rootPath, "log/log.log") };
+            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
+            LogManager.Configuration = config;
+
             AppDomain.CurrentDomain.AssemblyResolve += RootResolveHandler;
         }
 
