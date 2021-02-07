@@ -15,7 +15,16 @@ namespace ModLoader
         static ModLoader()
         {
             var config = new NLog.Config.LoggingConfiguration();
-            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = Path.Combine(rootPath, "log/log.log") };
+            var logfile = new NLog.Targets.FileTarget("logfile") {
+                FileName = Path.Combine(rootPath, "logs/log.log"),
+                ArchiveOldFileOnStartup = true,
+                MaxArchiveFiles = 5,
+                ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date,
+                ArchiveFileName = Path.Combine(rootPath, "logs/{#}.log"),
+                ArchiveDateFormat = "yyyy-MM-dd HH_mm_ss",
+                KeepFileOpen = true,
+                OpenFileCacheTimeout = 30,
+            };
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
             LogManager.Configuration = config;
 
