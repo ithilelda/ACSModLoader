@@ -3,13 +3,14 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using NLog;
+using ModLoader.Utilities;
 
 namespace ModLoader
 {
     public static class ModLoader
     {
         public readonly static string rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        public static List<Assembly> LoadedAssemblies { get; set; } = new List<Assembly>();
+        public static List<ModInfo> Mods { get; } = new List<ModInfo>();
         public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
         static ModLoader()
@@ -39,25 +40,15 @@ namespace ModLoader
             var modDirs = Directory.GetDirectories(rootPath);
             foreach (var dir in modDirs)
             {
-                var modName = Path.GetFileName(dir);
-                var modFiles = Directory.GetFiles(dir, $"{modName}.dll", SearchOption.AllDirectories);
-                try
+                var modInfo = Util.ReadModInfo(dir);
+                var fullName = Path.Combine(dir, modInfo.AssemblyFile);
+                var rasm = Util.PreLoadAssembly(fullName);
+                var asm = Util.LoadAssembly(rasm);
+                if (asm != null)
                 {
-                    foreach (var file in modFiles)
-                    {
-                        var rasm = Utilities.Util.PreLoadAssembly(file);
-                        var asm = Utilities.Util.LoadAssembly(rasm);
-                        if (asm != null)
-                        {
-                            LoadedAssemblies.Add(asm);
-                        }
-                        Utilities.Util.Call(asm, "OnBeforeGameStart");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Debug($"the mod {modName} cannot be loaded!");
-                    Logger.Debug($"the error is: {ex.Message}");
+                    modInfo.LoadedAssembly = asm;
+                    Util.Call(asm, modInfo.EntranceType, modInfo.EntranceMethod);
+                    Mods.Add(modInfo);
                 }
             }
         }
