@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Reflection;
-using System.Xml.Serialization;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace ModLoader
 {
-    [Serializable]
     public class ModInfo
     {
         public string Name = "";
@@ -15,7 +14,7 @@ namespace ModLoader
         public string AssemblyFile = "";
         public string EntranceType = "";
         public string EntranceMethod = "";
-        [XmlIgnore]
+        [JsonIgnore]
         public Assembly LoadedAssembly;
     }
 }

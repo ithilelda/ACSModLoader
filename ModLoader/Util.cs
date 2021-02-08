@@ -1,19 +1,18 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Collections.Generic;
-using System.Xml;
-using System.Xml.Serialization;
+using Newtonsoft.Json;
+using NLog;
 
-namespace ModLoader.Utilities
+namespace ModLoader
 {
-    static class Util
+    public static class Util
     {
-        static XmlSerializer serializer = new XmlSerializer(typeof(ModInfo));
 
-        public static ModInfo ReadModInfo(string modDir, string infoFile = "info.xml")
+        public static ModInfo ReadModInfo(string modDir, string infoFile = "info.json")
         {
             var defaultModName = Path.GetFileName(modDir);
+            ModLoader.Logger.Info($"Reading {infoFile} for mod {defaultModName}...");
             var info = new ModInfo
             {
                 Name = defaultModName,
@@ -24,26 +23,36 @@ namespace ModLoader.Utilities
             var modInfoFile = Path.Combine(modDir, infoFile);
             if (File.Exists(modInfoFile))
             {
-                using (var s = File.OpenRead(modInfoFile))
+                try
                 {
-                    var t = (ModInfo)serializer.Deserialize(s);
+                    ModLoader.Logger.Info($"Found {infoFile} for mod {defaultModName}, reading info...");
+                    var t = JsonConvert.DeserializeObject<ModInfo>(File.ReadAllText(modInfoFile));
                     if (t != null)
                     {
                         info = t;
                     }
                 }
+                catch (Exception ex)
+                {
+                    ModLoader.Logger.Debug($"Failed to read {infoFile} for mod {defaultModName}! Fall back to default settings! Check your info file!");
+                    ModLoader.Logger.Debug(ex.Message);
+                    ModLoader.Logger.Debug(ex.StackTrace);
+                }
             }
+            else ModLoader.Logger.Info($"Cannot find {infoFile} for mod {defaultModName}, using default info.");
             return info;
         }
         public static Assembly PreLoadAssembly(string file)
         {
             var fileName = Path.GetFileName(file);
+            ModLoader.Logger.Info($"Trying to pre-Load assembly {fileName}.");
             if (File.Exists(file))
             {
+                ModLoader.Logger.Info($"found {fileName}, pre-loading...");
                 try
                 {
-                    ModLoader.Logger.Debug($"Pre-Loading: {fileName}");
                     var assembly = Assembly.ReflectionOnlyLoadFrom(file);
+                    ModLoader.Logger.Info($"Successfully pre-loaded assembly {fileName}.");
                     return assembly;
                 }
                 catch (Exception ex)
@@ -53,6 +62,7 @@ namespace ModLoader.Utilities
                     ModLoader.Logger.Debug(ex.StackTrace);
                 }
             }
+            else ModLoader.Logger.Info($"Cannot find {fileName}, ignoring this mod.");
             return null;
         }
         public static Assembly LoadAssembly(Assembly asm)
@@ -61,13 +71,14 @@ namespace ModLoader.Utilities
             {
                 try
                 {
-                    ModLoader.Logger.Debug($"Loading: {asm.FullName}");
+                    ModLoader.Logger.Info($"Trying to load assembly {asm.FullName}");
                     var loaded = Assembly.LoadFrom(asm.Location);
+                    ModLoader.Logger.Info($"Successfully loaded assembly {asm.FullName}.");
                     return loaded;
                 }
                 catch (Exception ex)
                 {
-                    ModLoader.Logger.Debug($"loading assembly {asm.GetName()} failed!");
+                    ModLoader.Logger.Debug($"loading assembly {asm.FullName} failed!");
                     ModLoader.Logger.Debug(ex.Message);
                     ModLoader.Logger.Debug(ex.StackTrace);
                 }
@@ -81,8 +92,9 @@ namespace ModLoader.Utilities
                 try
                 {
                     var name = asm.GetName().Name;
-                    ModLoader.Logger.Debug($"calling the {method} method of {type} in {name}.dll...");
+                    ModLoader.Logger.Info($"calling the method {method} of {type} in {asm.FullName}...");
                     asm.GetType(type)?.GetMethod(method)?.Invoke(null, null);
+                    ModLoader.Logger.Info($"Successfully called method {method} of {type} in {asm.FullName}.");
                 }
                 catch (ArgumentException ae)
                 {
@@ -90,7 +102,7 @@ namespace ModLoader.Utilities
                 }
                 catch (TargetInvocationException tie)
                 {
-                    ModLoader.Logger.Debug($"invocation of {method} in {asm.FullName}, {type} failed!");
+                    ModLoader.Logger.Debug($"Failed to invoke {method} of {type} in {asm.FullName}!");
                     var ie = tie.InnerException;
                     ModLoader.Logger.Debug(ie.Message);
                     ModLoader.Logger.Debug(ie.StackTrace);

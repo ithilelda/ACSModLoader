@@ -3,7 +3,6 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using NLog;
-using ModLoader.Utilities;
 
 namespace ModLoader
 {
@@ -36,8 +35,9 @@ namespace ModLoader
         // also calls the oninit events that ought to be run only once each game.
         public static void Main()
         {
-            Logger.Debug("loading assemblies before game starts...");
+            Logger.Info($"ModLoader successfully initiated. Loading mods before game starts...");
             var modDirs = Directory.GetDirectories(rootPath);
+            Logger.Info($"{modDirs.Length} mods found.");
             foreach (var dir in modDirs)
             {
                 var modInfo = Util.ReadModInfo(dir);
