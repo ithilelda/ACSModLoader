@@ -8,8 +8,8 @@ namespace ModLoader
 {
     public static class ModLoader
     {
-        public readonly static string rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        public static List<ModInfo> Mods { get; } = new List<ModInfo>();
+        public static readonly string rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static List<Assembly> Mods { get; } = new List<Assembly>();
         public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
         static ModLoader()
@@ -40,15 +40,14 @@ namespace ModLoader
             Logger.Info($"{modDirs.Length} mods found.");
             foreach (var dir in modDirs)
             {
-                var modInfo = Util.ReadModInfo(dir);
-                var fullName = Path.Combine(dir, modInfo.AssemblyFile);
+                var modName = Path.GetFileName(dir);
+                var fullName = Path.Combine(dir, $"{modName}.dll");
                 var rasm = Util.PreLoadAssembly(fullName);
                 var asm = Util.LoadAssembly(rasm);
                 if (asm != null)
                 {
-                    modInfo.LoadedAssembly = asm;
-                    Util.Call(asm, modInfo.EntranceType, modInfo.EntranceMethod);
-                    Mods.Add(modInfo);
+                    Util.Call(asm, $"{modName}.{modName}");
+                    Mods.Add(asm);
                 }
             }
         }

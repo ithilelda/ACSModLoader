@@ -1,47 +1,11 @@
 using System;
 using System.IO;
 using System.Reflection;
-using Newtonsoft.Json;
-using NLog;
 
 namespace ModLoader
 {
     public static class Util
     {
-
-        public static ModInfo ReadModInfo(string modDir, string infoFile = "info.json")
-        {
-            var defaultModName = Path.GetFileName(modDir);
-            ModLoader.Logger.Info($"Reading {infoFile} for mod {defaultModName}...");
-            var info = new ModInfo
-            {
-                Name = defaultModName,
-                AssemblyFile = $"{defaultModName}.dll",
-                EntranceType = $"{defaultModName}.{defaultModName}",
-                EntranceMethod = "Main",
-            };
-            var modInfoFile = Path.Combine(modDir, infoFile);
-            if (File.Exists(modInfoFile))
-            {
-                try
-                {
-                    ModLoader.Logger.Info($"Found {infoFile} for mod {defaultModName}, reading info...");
-                    var t = JsonConvert.DeserializeObject<ModInfo>(File.ReadAllText(modInfoFile));
-                    if (t != null)
-                    {
-                        info = t;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ModLoader.Logger.Debug($"Failed to read {infoFile} for mod {defaultModName}! Fall back to default settings! Check your info file!");
-                    ModLoader.Logger.Debug(ex.Message);
-                    ModLoader.Logger.Debug(ex.StackTrace);
-                }
-            }
-            else ModLoader.Logger.Info($"Cannot find {infoFile} for mod {defaultModName}, using default info.");
-            return info;
-        }
         public static Assembly PreLoadAssembly(string file)
         {
             var fileName = Path.GetFileName(file);
@@ -85,7 +49,7 @@ namespace ModLoader
             }
             return null;
         }
-        public static void Call(Assembly asm, string type, string method)
+        public static void Call(Assembly asm, string type, string method = "Main")
         {
             if (asm != null)
             {
