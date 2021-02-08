@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netcoreapp3.1;net472;net35</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net35;net5.0;net472;</TargetFrameworks>
     <RootNamespace>ModLoader</RootNamespace>
     <AssemblyName>ModLoader</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lib.Harmony" Version="2.0.4" />
+    <PackageReference Include="HarmonyX" Version="2.3.1" />
     <PackageReference Include="NLog" Version="4.7.7" />
   </ItemGroup>
 
